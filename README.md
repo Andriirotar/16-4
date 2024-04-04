@@ -1,52 +1,68 @@
 #include <iostream>
+#include <fstream>
+#include <cmath>
 #include <vector>
-#include <algorithm>
-// Функція для обчислення G
-double calculateG(const std::vector<int>& g0, const std::vector<int>& g1, const std::vector<int>& g2, const std::vector<int>& g3, const std::vector<int>& g4, const std::vector<int>& g5, const std::vector<int>& g6) {
-    double G = 0.0;
-    int size = g0.size(); // Розмір вектора g0 (однаковий для всіх g векторів)
-    for (int j = 1; j < size; ++j) {
-        double maxGj = std::max({static_cast<double>(g0[j]), static_cast<double>(g1[j]), static_cast<double>(g2[j]), static_cast<double>(g3[j]), static_cast<double>(g4[j]), static_cast<double>(g5[j]), static_cast<double>(g6[j])});
-        double minGj_1 = std::min({static_cast<double>(g0[j - 1]), static_cast<double>(g1[j - 1]), static_cast<double>(g2[j - 1]), static_cast<double>(g3[j - 1]), static_cast<double>(g4[j - 1]), static_cast<double>(g5[j - 1]), static_cast<double>(g6[j - 1])});
-        G += maxGj - minGj_1;
+#include <stdexcept>
+// Функція для зчитування даних з файлу та побудови таблиці
+std::vector<std::vector<double>> readTableFromFile(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Помилка відкриття файлу " + filename);
     }
-    return G;
+    std::vector<std::vector<double>> table;
+    double x, T, U;
+    std::string text;
+    while (file >> x >> U >> T >> text) {
+        table.push_back({x, U, T});
+    }
+    return table;
 }
-int main() {
-    int k;
-    std::cout << "Введіть ціле число k (k > 5): ";
-    std::cin >> k;
-    int N = 15 * k;
-    // Оголошення та ініціалізація вектора v
-    std::vector<int> v(N);
-    // Отримання вхідних даних (елементів вектора v)
-    std::cout << "Введіть " << N << " чисел для вектора v:\n";
-    for (int i = 0; i < N; ++i) {
-        std::cin >> v[i];
-    }
-    // Побудова векторів g0, g1, g2, g3
-    std::vector<int> g0(v.begin() + 2, v.begin() + 9 * k + 2);
-    std::vector<int> g1, g2, g3;
-    for (int j = 0; j < 10; j += 3) {
-        for (int i = j; i <= j + 3 * k; i += 3) {
-            g1.push_back(v[i]);
-            g1.push_back(v[i + 3]);
-            g2.push_back(v[10 + j]);
-            g2.push_back(v[10 + j + 3]);
-            g3.push_back(v[20 + j]);
-            g3.push_back(v[20 + j + 3]);
+// Функція для обчислення максимального значення серед параметрів
+double computeMax(const std::vector<double>& params) {
+    double maxVal = params[0];
+    for (size_t i = 1; i < params.size(); ++i) {
+        if (params[i] > maxVal) {
+            maxVal = params[i];
         }
     }
-    // Побудова векторів g4, g5, g6
-    std::vector<int> g4(g0.size());
-    std::vector<int> g5(g0.size());
-    std::vector<int> g6(g0.size());
-    std::transform(g0.begin(), g0.end(), g1.begin(), g4.begin(), std::plus<int>());
-    std::transform(g3.begin(), g3.end(), g2.begin(), g5.begin(), std::minus<int>());
-    std::transform(g0.begin(), g0.end(), g6.begin(), [k](int value) { return value / k; });
-    // Обчислення значення G
-    double G = calculateG(g0, g1, g2, g3, g4, g5, g6);
-    // Виведення результату
-    std::cout << "Результат обчислення G: " << G << std::endl;
+    return maxVal;
+}
+// Алгоритм 1
+double algorithm1(double k, double r) {
+    return (k * r + 10270.) * (k * r + 89730.);
+}
+// Алгоритм 2
+double algorithm2(double x, double y, double z) {
+    return (x * y - x * z * y + x * y * y - x * y * y * 0.54 + x * y * y * 0.46);
+}
+// Алгоритм 3
+double algorithm3(double x, double y, double z) {
+    return (x * y - 1.5 * x * z * y + 251. * x * y * y - 751. * x * y * y);
+}
+int main() {
+    double x, y, z;
+    std::string text;
+    std::cout << "Введіть значення x, y, z та текст: ";
+    std::cin >> x >> y >> z >> text;
+    try {
+        std::vector<std::vector<double>> table4 = readTableFromFile("dat1.dat");
+        std::vector<std::vector<double>> table5 = readTableFromFile("dat2.dat");
+        std::vector<std::vector<double>> table6 = readTableFromFile("dat3.dat");
+        double result;
+        if (text.empty()) {
+            result = computeMax({x, y, z});
+        } else {
+            result = std::stod(text);
+        }
+
+        if (x <= 5) {
+            result = algorithm2(x, y, z);
+        } else if (x > 5 && x <= 10) {
+            result = algorithm3(x, y, z);
+        }
+        std::cout << "Результат обчислення Variant(r, k): " << result << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Помилка: " << e.what() << std::endl;
+    }
     return 0;
 }
